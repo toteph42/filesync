@@ -16,7 +16,7 @@ composer require toteph42/filesync
 
 #### Via contao-manager
 ```
-Search for filesyncbundle and add it to your extensions.
+Search for totep42/filesync bundle and add it to your extensions.
 ```
 
 After installing the contao-member-extension-bundle, you need to run a **contao install**.
@@ -24,20 +24,42 @@ After installing the contao-member-extension-bundle, you need to run a **contao 
 
 ## Usage
 
-1. Define `MemberGroups` exactly as the folder names were defined (e.g. member group `Group1`). 
+1. Define `Member groups` exactly as the folder names were defined (e.g. member group `Group1`). 
 2. Assign this group to a member.
-4. Create a directory below `files` directory named like your group (e.g. `Group1`). 
+4. Create a directory below `files` directory named like your group (e.g. `files/Group1`). 
 5. Then copy any files to the directory and call `vendor/contao-console toteph42:filesync`. 
 
-If you want members to disable notification:
+#### Disable notification
 
 1. Uncheck checkbox `Notify user about changes in file system` in member definition (default=true).
 
-If you want members to give the possibility to select wheter they want notification or not in frontend:
+#### Member configuration 
 
-1. Create a frontend module `Personaldata`.
-2. Select field `Filesync`as editable field.
-3. Create a page with the frontend module included.
+If you want members to give the possibility to select whether they want notification or not in frontend:
+
+1. Create a frontend module `Personal data`.
+2. Select field `Notify user about changes in file system` as `Editable fields`.
+3. Create an `Article` and include the module you just created.
+
+#### Creating message to send
+
+Now you need to create a `Forms` with the name of the group (e.g. member group `Group1`).
+
+1. Click on checkbox `Send form data via e-mail` in section **Send form data**.
+2. Enter the `sender` address in field `Recipient address` (e.g.**from@exaple.com**).
+3. Add your `Subject`.
+4. Select **Data format** `E-mail`.
+5. **Save and close**
+6. Add a content field with **Field type** `Explanation`.
+7. Enter your e-Mail in `Text` field. Use the placehoder `[[files]]` where you want the list of files to be inserted.
+8. **Save and close**
+
+To start sending notification e-Mails, you need to edit your crontab using `crontab -e` and enter:
+
+```
+# Synchronize files
+30 * * * *    /opt/php8.3.13/bin/php [Path to your Contao installation]/vendor/bin/contao-console toteph42:filesync
+```
 
 Please enjoy!
 

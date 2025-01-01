@@ -83,7 +83,7 @@ class FilesyncCommand extends Command
     	if ($changeSet->isEmpty())
         {
             $output->writeln('No changes.');
- #           return;
+            return;
         }
 
     	// get all group names
@@ -93,22 +93,23 @@ class FilesyncCommand extends Command
 
     	$users = MemberModel::findAll();
 
-    	// get all users
-    	$cre_files = self::getfiles($groups, $users, $changeSet->getItemsToCreate());
-    	$upd_files = self::getfiles($groups, $users, $changeSet->getItemsToUpdate());
-
-$upd_files[124]['huhu'] = 'this is a file.pf';
+    	// get all files from user
+    	$files = self::getfiles($groups, $users, $changeSet->getItemsToCreate()) +
+    			 self::getfiles($groups, $users, $changeSet->getItemsToUpdate());
 
 		// get transport
 		$transport = Transport::fromDsn($_SERVER['MAILER_DSN']);
 		$mailer = new Mailer($transport);
 
 		// send mail
-    	foreach ($cre_files + $upd_files as $grp => $file)
+    	foreach ($files as $grp => $file)
     	{
 			// try to find form for group
     		if (!($form = FormModel::findByTitle($groups[$grp])) || $form->format != 'email')
+    		{
+    			$output->writeln('+++ No form for "'.$groups[$grp].'" found - skipping');
    				continue;
+    		}
 
     		// collect all user of this group
     		$to = [];
@@ -121,23 +122,21 @@ $upd_files[124]['huhu'] = 'this is a file.pf';
     		// send email
    			$email = new Email();
    			$email->subject($form->subject);
+   			$email->from($form->recipient);
    			$txt   = '';
 			foreach (FormFieldModel::findByPId($form->id) as $field)
 			{
-				if ($field->type == 'submit')
-					$email->from($field->slabel);
 				if ($field->type == 'explanation')
 					$txt = $field->text;
 			}
-			$txt = str_replace('{{new_files}}', isset($cre_files[$grp]) ?
-	   								 implode('<br>', $cre_files[$grp]) : '', $txt);
-			$email->html(str_replace('{{upd_files}}', isset($upd_files[$grp]) ?
-	   								implode('<br>', $upd_files[$grp]) : '', $txt));
-			$email->to('jam@wb28.de');
-			$mailer->send($email);
+			$email->html(str_replace('[[files]]', isset($files[$grp]) ? implode('<br>', $files[$grp]) : '', $txt));
+			foreach ($to as $name)
+			{
+				$email->to('jam@wb28.de');
+				$output->writeln('E-Mail notification send to "'.$name.'"');
+				$mailer->send($email);
+			}
     	}
-
-return;
 
 		$table = new Table($output);
         $table->setHeaders(['Action', 'Resource / Change']);
