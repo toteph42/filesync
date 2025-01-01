@@ -1,0 +1,17 @@
+#
+# 	This File is part of Toteph42 FilesyncBundle
+#
+#	@copyright	(c) 2024 Florian Daeumling, Germany. All right reserved
+# 	@license 	https://github.com/toteph42/filesync/blob/master/LICENSE
+#
+services:
+    _defaults:
+        autoconfigure: true
+        public: false
+
+    toteph42.filesync:
+        class: Toteph42\FilesyncBundle\Command\FilesyncCommand
+        arguments:
+            - '@contao.filesystem.dbafs_manager'
+            - '@contao.framework'
+ 

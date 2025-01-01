@@ -1,0 +1,22 @@
+<?xml version="1.0" ?><xliff version="1.1">
+  <!--
+ 
+  	This File is part of Toteph42 FilesyncBundle
+ 
+ 	@copyright	(c) 2024 Florian Daeumling, Germany. All right reserved
+  	@license 	https://github.com/toteph42/filesync/blob/master/LICENSE
+
+  -->
+  <file datatype="php" original="contao/languages/en/tl_member.php" source-language="en" target-language="de">
+     <body>
+      <trans-unit id="tl_member.filesync.0">
+        <source>Notify user about changes in file system</source>
+        <target>Benachrichtige Benutzer bei Änderungen im Dateisystem</target>
+      </trans-unit>
+      <trans-unit id="tl_member.filesync.1">
+        <source>Send user a eMail every time when a file has been added or updated in related group member directory.</source>
+        <target>Sende Benutzer eine e-Mail jedes mal, wenn eine Datei zum Verzeichnis der Gruppenmitglieder hinzugefügt oder verändert wurde</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

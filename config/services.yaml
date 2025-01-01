@@ -1,0 +1,15 @@
+#
+# 	This File is part of Toteph42 FilesyncBundle
+#
+#	@copyright	(c) 2024 Florian Daeumling, Germany. All right reserved
+# 	@license 	https://github.com/toteph42/filesync/blob/master/LICENSE
+#
+services:
+    _defaults:
+        autoconfigure: true
+        autowire: true
+        public: true
+        
+    Toteph42\FilesyncBundle:
+        autoconfigure: true
+            
