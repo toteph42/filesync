@@ -109,10 +109,12 @@ class FilesyncCommand extends Command
     		foreach ($users as $usr)
     		{
 				if (strpos($usr->groups, '"'.$grp.'"'))
+				{
 					if ($usr->filesync == 0)
 						$output->writeln('+++ User "'.$usr->firstname.' '.$usr->lastname.'" excluded from notification');
 					else
-						$to[] = '<'.$usr->firstname.' '.$usr->lastname.'> '.$usr->email;
+						$to[] = $usr->firstname.' '.$usr->lastname.' <'.$usr->email.'>';
+				}
     		}
 
     		// send email
