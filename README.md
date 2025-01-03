@@ -54,6 +54,16 @@ Now you need to create a `Forms` with the name of the group (e.g. member group `
 7. Enter your e-Mail in `Text` field. Use the placehoder `[[files]]` where you want the list of files to be inserted.
 8. **Save and close**
 
+#### Testing
+
+To test, please go to your web directory and use the command
+
+```
+/vendor/bin/contao-console toteph42:filesync
+```
+
+### Production
+
 To start sending notification e-Mails, you need to edit your crontab using `crontab -e` and enter:
 
 ```

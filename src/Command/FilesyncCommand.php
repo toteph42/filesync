@@ -26,6 +26,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mime\Email;
+use Contao\FilesModel;
 use Contao\MemberGroupModel;
 use Contao\MemberModel;
 use Contao\FormModel;
@@ -47,19 +48,19 @@ class FilesyncCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->framework->initialize();
-
-        $output->writeln('Synchronizing…');
+		$output->writeln('Synchronizing…');
 
         $time = microtime(true);
         $changeSet = $this->dbafsManager->sync(...$input->getArgument('paths'));
         $timeTotal = round(microtime(true) - $time, 2);
 
+        // send notification
+        $this->notify($changeSet, $output);
+
         $this->renderStats($changeSet, $output);
 
         (new SymfonyStyle($input, $output))->success("Synchronization complete in {$timeTotal}s.");
 
-        return Command::FAILURE;
         return Command::SUCCESS;
     }
 
@@ -70,77 +71,13 @@ class FilesyncCommand extends Command
 
     private function renderStats(ChangeSet $changeSet, OutputInterface $output): void
     {
-
     	if ($changeSet->isEmpty())
         {
             $output->writeln('No changes.');
             return;
         }
 
-        $output->writeln('Checking for file notification…');
-
-        // get all group names
-    	$groups = [];
-    	foreach (MemberGroupModel::findAll() as $item)
-    		$groups[$item->id] = $item->name;
-
-    	$users = MemberModel::findAll();
-
-    	// get all files from user
-    	$files = self::getfiles($groups, $users, $changeSet->getItemsToCreate()) +
-    			 self::getfiles($groups, $users, $changeSet->getItemsToUpdate());
-
-		// get transport
-		$transport = Transport::fromDsn($_SERVER['MAILER_DSN']);
-		$mailer = new Mailer($transport);
-
-		// check files
-    	foreach ($files as $grp => $file)
-    	{
-			// try to find form for group
-    		if (!($form = FormModel::findByTitle($groups[$grp])) || $form->format != 'email')
-    		{
-    			$output->writeln('+++ No form for "'.$groups[$grp].'" found - skipping');
-   				continue;
-    		}
-
-    		// collect all user of this group
-    		$to = [];
-    		foreach ($users as $usr)
-    		{
-				if (strpos($usr->groups, '"'.$grp.'"'))
-				{
-					if ($usr->filesync == 0)
-						$output->writeln('+++ User "'.$usr->firstname.' '.$usr->lastname.'" excluded from notification');
-					else
-						$to[] = $usr->firstname.' '.$usr->lastname.' <'.$usr->email.'>';
-				}
-    		}
-
-    		// send email
-   			$email = new Email();
-   			$email->subject($form->subject);
-   			$email->from($form->recipient);
-   			$txt   = '';
-			foreach (FormFieldModel::findByPId($form->id) as $field)
-			{
-				if ($field->type == 'explanation')
-					$txt = $field->text;
-			}
-			$email->html(str_replace('[[files]]', isset($files[$grp]) ? implode('<br>', $files[$grp]) : '', $txt));
-
-			// send mail
- 			foreach ($to as $name)
-			{
-				$email->to($name);
-				$output->writeln('E-Mail notification send to "'.$name.'"');
-				$mailer->send($email);
-			}
-    	}
-    	$file; // disable Eclipse warning
-
-
-    	$table = new Table($output);
+     	$table = new Table($output);
         $table->setHeaders(['Action', 'Resource / Change']);
 
         $output->getFormatter()->setStyle('hash', new OutputFormatterStyle('yellow'));
@@ -186,33 +123,118 @@ class FilesyncCommand extends Command
         );
     }
 
-    private function getfiles(array $groups, Collection &$users, array $items): array
+    private function notify(ChangeSet $changeSet, OutputInterface $output): void
     {
-    	$out = [];
 
-    	// process list of files
-    	foreach ($items as $item)
-		{
-			$path = strpos(get_class($item), 'ItemToCreate') ? $item->getPath() : $item->getExistingPath();
+		$output->writeln('Checking for file notification…');
 
-			foreach ($users as $usr)
-    		{
-    			foreach (unserialize($usr->groups) as $grp)
-    			{
-    				if (($p = strpos($path, $groups[$grp])) === false)
-    					continue;
-    				$file = substr($path, $p + strlen($groups[$grp]));
-					if (strpos($file, '.'))
+    	// initialize framework
+        $this->framework->initialize();
+
+        // get all changes
+	   	$all_files = [];
+
+    	// get list of all files
+    	foreach ($changeSet->getItemsToCreate()+$changeSet->getItemsToUpdate() as $item)
+			$all_files[] = substr(strpos(get_class($item), 'ItemToCreate') ? $item->getPath() : $item->getExistingPath(), 6);
+
+       	// sort out user files
+        $usr_files = [];
+	   	$users = MemberModel::findAll();
+	   	foreach ($users as $usr)
+	   	{
+	   		$usr_files[$usr->id] = [];
+
+	   		// home directory set?
+			if ($usr->homeDir && ($obj = FilesModel::findByUuid($usr->homeDir)))
+			{
+				foreach ($all_files as $k => $file)
+				{
+					$path = substr($obj->path, 6);
+					if (str_contains($file, $path) !== false)
 					{
-						if (!isset($out[$grp]))
-							$out[$grp] = [];
-						$out[$grp][] = $file;
+						$usr_files[$usr->id][] = $file;
+						unset($all_files[$k]);
 					}
-    			}
+				}
 			}
-		}
+	   	}
 
-		return $out;
+	   	// sort out group files
+    	$grp_files = [];
+    	foreach (MemberGroupModel::findAll() as $item)
+    	{
+	   		$grp_files[$item->id] = [];
+
+ 			// try to find form for group
+    		if (!($form = FormModel::findByTitle($item->name)) || $form->format != 'email')
+   				continue;
+			$grp_files[$item->id]['form'] = $form;
+
+  			foreach ($all_files as $k => $file)
+			{
+				if (str_contains($file, $item->name))
+				{
+					$grp_files[$item->id][] = substr($file, strlen($item->name) + 1);
+					unset($all_files[$k]);
+				}
+			}
+    	}
+
+		// get transport
+		$transport = Transport::fromDsn($_SERVER['MAILER_DSN']);
+		$mailer = new Mailer($transport);
+
+		// notify user
+	   	foreach ($users as $usr)
+	   	{
+	   		// disabled?
+	   		if ($usr->disable)
+	   			continue;
+
+	   		// file synchronization disabled
+			if (!$usr->filesync)
+			{
+				$output->writeln('+++ User "'.$usr->firstname.' '.$usr->lastname.'" excluded from notification');
+				continue;
+			}
+
+			// collect files
+			$files = $usr_files[$usr->id];
+			foreach (unserialize($usr->groups) as $grp)
+			{
+				foreach ($grp_files[$grp] as $k => $file)
+				{
+					if (is_numeric($k))
+					{
+						if (!($p = strrpos($file, '/')))
+							continue;
+						if (strpos(substr($file, $p + 1), '.'))
+							$files[] = $file;
+					}
+				}
+				// any file found?
+				if (!count($files) || !isset($grp_files[$grp]['form']))
+					continue;
+
+	    		// send email
+	   			$email = new Email();
+	   			$email->subject($grp_files[$grp]['form']->subject);
+	   			$email->from($grp_files[$grp]['form']->recipient);
+	   			$txt   = '';
+				foreach (FormFieldModel::findByPId($grp_files[$grp]['form']->id) as $field)
+				{
+					if ($field->type == 'explanation')
+						$txt = $field->text;
+				}
+				$email->html(str_replace('[[files]]', implode('<br>', $files), $txt));
+				$name = $usr->firstname.' '.$usr->lastname.' <'.$usr->email.'>';
+
+				$email->to($name);
+				$output->writeln('E-Mail notification send to "'.$name.'"');
+				$mailer->send($email);
+			}
+	   }
     }
 
 }
