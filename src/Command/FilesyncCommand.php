@@ -201,38 +201,44 @@ class FilesyncCommand extends Command
 
 			// collect files
 			$files = $usr_files[$usr->id];
-			foreach (unserialize($usr->groups) as $grp)
+## Testing: $files[] = 'Changed file';
+			if (!is_null($usr->groups))
 			{
-				foreach ($grp_files[$grp] as $k => $file)
+				foreach (unserialize($usr->groups) as $grp)
 				{
-					if (is_numeric($k))
+					foreach ($grp_files[$grp] as $k => $file)
 					{
-						if (!($p = strrpos($file, '/')))
-							continue;
-						if (strpos(substr($file, $p + 1), '.'))
-							$files[] = $file;
+						if (is_numeric($k))
+						{
+							if (!($p = strrpos($file, '/')))
+								continue;
+
+							if (strpos(substr($file, $p + 1), '.'))
+								$files[] = $file;
+						}
 					}
-				}
-				// any file found?
-				if (!count($files) || !isset($grp_files[$grp]['form']))
-					continue;
 
-	    		// send email
-	   			$email = new Email();
-	   			$email->subject($grp_files[$grp]['form']->subject);
-	   			$email->from($grp_files[$grp]['form']->recipient);
-	   			$txt   = '';
-				foreach (FormFieldModel::findByPId($grp_files[$grp]['form']->id) as $field)
-				{
-					if ($field->type == 'explanation')
-						$txt = $field->text;
-				}
-				$email->html(str_replace('[[files]]', implode('<br>', $files), $txt));
-				$name = $usr->firstname.' '.$usr->lastname.' <'.$usr->email.'>';
+					// any file found?
+					if (!count($files) || !isset($grp_files[$grp]['form']))
+						continue;
 
-				$email->to($name);
-				$output->writeln('E-Mail notification send to "'.$name.'"');
-				$mailer->send($email);
+		    		// send email
+		   			$email = new Email();
+		   			$email->subject($grp_files[$grp]['form']->subject);
+		   			$email->from($grp_files[$grp]['form']->recipient);
+		   			$txt   = '';
+					foreach (FormFieldModel::findByPId($grp_files[$grp]['form']->id) as $field)
+					{
+						if ($field->type == 'explanation')
+							$txt = $field->text;
+					}
+					$email->html(str_replace('[[files]]', implode('<br>', $files), $txt));
+					$name = $usr->firstname.' '.$usr->lastname.' <'.$usr->email.'>';
+
+					$email->to($name);
+					$output->writeln('E-Mail notification send to "'.$name.'"');
+					$mailer->send($email);
+				}
 			}
 	   }
     }

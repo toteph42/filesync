@@ -59,8 +59,14 @@ Now you need to create a `Forms` with the name of the group (e.g. member group `
 To test, please go to your web directory and use the command
 
 ```
-/vendor/bin/contao-console toteph42:filesync
+vendor/bin/contao-console toteph42:filesync
 ```
+or for a specific php version e.g.
+
+```
+/opt/php8.3.24/bin/php vendor/bin/contao-console toteph42:filesync
+```
+
 
 ### Production
 
