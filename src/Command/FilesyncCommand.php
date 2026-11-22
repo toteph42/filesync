@@ -5,7 +5,7 @@ declare(strict_types=1);
  * 	This File is part of Toteph42 FilesyncBundle
  *
  *	@copyright	(c) 2024 Florian Daeumling, Germany. All right reserved
- * 	@license 	https://github.com/toteph42/filesync/blob/master/LICENSE
+ * 	@license 	https://www.gnu.org/licenses/gpl-3.0.en.html
  */
 
 namespace Toteph42\FilesyncBundle\Command;
@@ -39,6 +39,8 @@ use function Safe\array_flip;
 )]
 class FilesyncCommand extends Command
 {
+	public const _dbg = 0; // 0-normal;1-debug
+
     public function __construct(
     		private readonly DbafsManager $dbafsManager,
     		private readonly ContaoFramework $framework)
@@ -201,7 +203,6 @@ class FilesyncCommand extends Command
 
 			// collect files
 			$files = $usr_files[$usr->id];
-## Testing: $files[] = 'Changed file';
 			if (!is_null($usr->groups))
 			{
 				foreach (unserialize($usr->groups) as $grp)
@@ -237,10 +238,16 @@ class FilesyncCommand extends Command
 
 					$email->to($name);
 					$output->writeln('E-Mail notification send to "'.$name.'"');
-					$mailer->send($email);
+					if (!$this->_dbg)
+						$mailer->send($email);
+					else
+						foreach ($files as $file)
+							$output->writeln($file);
 				}
 			}
-	   }
+	   	}
+	   	if ($this->_dbg)
+	   		exit();
     }
 
 }

@@ -2,14 +2,8 @@
 	"name" : "toteph42/filesync",
 	"type" : "contao-bundle",
 	"description" : "Extended file synchronisation bundle with user e-mail notification for Contao Open Source CMS",
-	"license" : "GPL-3.0+",
 	"homepage" : "https://github.com/toteph42/filesync",
-	"authors" : [{
-			"name" : "Florian Daeumling",
-			"homepage" : "https://github.com/toteph42",
-			"role" : "Author"
-		}
-	],
+	"license" : "https://www.gnu.org/licenses/gpl-3.0.en.html",
 	"keywords" : [
 		"notification",
 		"email",
@@ -18,10 +12,20 @@
 		"synchonisation",
 		"contao"
 	],
+	"authors" : [{
+			"name" : "Florian Daeumling",
+			"role" : "Author"
+		}
+	],
+	"funding" : [{
+			"type" : "other",
+			"url" : "https://www.paypal.com/donate/?hosted_button_id=DS6VK49NAFHEQ"
+		}
+	],
 	"require" : {
 		"php" : ">=8.0",
 		"contao/core-bundle" : ">=5.3.0",
-		"symfony/mailer": "^6.4"
+		"symfony/mailer" : "^6.4"
 	},
 	"conflict" : {
 		"contao/manager-plugin" : "<2.0 || >=3.0"
@@ -36,7 +40,7 @@
 	},
 	"support" : {
 		"issues" : "https://github.com/toteph42/filesync/issues",
-		"source" : "https://github.com/toteph42/filesync",
-		"docs" : "https://github.com/toteph42/filesync"
+		"docs" : "https://github.com/toteph42/filesync",
+		"email" : "toteph42@wb28.de"
 	}
 }

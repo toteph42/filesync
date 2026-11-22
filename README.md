@@ -64,7 +64,7 @@ vendor/bin/contao-console toteph42:filesync
 or for a specific php version e.g.
 
 ```
-/opt/php8.3.24/bin/php vendor/bin/contao-console toteph42:filesync
+/opt/php8.3/bin/php vendor/bin/contao-console toteph42:filesync
 ```
 
 
@@ -77,7 +77,11 @@ To start sending notification e-Mails, you need to edit your crontab using `cron
 30 * * * *    /opt/php8.3.13/bin/php [Path to your Contao installation]/vendor/bin/contao-console toteph42:filesync
 ```
 
-Please enjoy!
+### License ###
+
+This software  is released under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+## Donation ##
 
 If you enjoy my software, I would be happy to receive a donation.
 
